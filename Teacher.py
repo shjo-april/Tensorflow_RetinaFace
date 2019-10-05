@@ -29,7 +29,7 @@ class Teacher(threading.Thread):
     name = ''
     retina_utils = None
     
-    def __init__(self, total_data_list, retina_sizes, min_data_size = 1, max_data_size = 10, name = 'Thread', debug = False):
+    def __init__(self, total_data_list, retina_sizes, min_data_size = 1, max_data_size = 2, name = 'Thread', debug = False):
         self.name = name
         self.debug = debug
         

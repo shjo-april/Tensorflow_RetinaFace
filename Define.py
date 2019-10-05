@@ -2,7 +2,7 @@
 # author : SangHyeon Jo <josanghyeokn@gmail.com>
 
 # dataset parameters
-ROOT_DIR = 'D:/_ImageDataset/Wider_Face_Dataset/'
+ROOT_DIR = 'D:/_DeepLearning_DB/Wider_Face_Dataset/'
 
 CLASS_NAMES = ['background'] + ['Face']
 CLASS_DIC = {class_name : index for index, class_name in enumerate(CLASS_NAMES)}
@@ -39,7 +39,7 @@ WEIGHT_DECAY = 0.0005
 
 # train
 # use thread (Dataset)
-NUM_THREADS = 10
+NUM_THREADS = 8
 
 # single gpu training
 GPU_INFO = "0,1,2,3"
