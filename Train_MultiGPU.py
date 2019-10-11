@@ -56,7 +56,7 @@ pred_bboxes_op = tf.concat(pred_bboxes_ops, axis = 0)
 pred_classes_op = tf.concat(pred_classes_ops, axis = 0)
 
 retina_utils.generate_anchors(retina_sizes)
-pred_bboxes_op = Decode_Layer(retina_dic['pred_bboxes'], retina_utils.anchors)
+pred_bboxes_op = Decode_Layer(pred_bboxes_op, retina_utils.anchors)
 
 _, retina_size, _ = pred_bboxes_op.shape.as_list()
 gt_bboxes_var = tf.placeholder(tf.float32, [None, retina_size, 4])
