@@ -106,8 +106,8 @@ def Decode_Layer(offset_bboxes, anchors):
     pred_bboxes = tf.transpose(pred_bboxes, perm = [1, 2, 0])
     return pred_bboxes
 
-def RetinaNet_MobileNetv2(input_var, is_training, reuse = False):
-
+def RetinaFace_ResNet50(input_var, is_training, reuse = False):
+    # OpenCV BGR to RGB & normalize (ImageNet)
     x = input_var[..., ::-1] - MEAN
     with tf.contrib.slim.arg_scope(resnet_v1.resnet_arg_scope()):
         logits, end_points = resnet_v1.resnet_v1_50(x, is_training = is_training, reuse = reuse)
@@ -190,12 +190,12 @@ def RetinaNet_MobileNetv2(input_var, is_training, reuse = False):
     
     return retina_dic, retina_sizes
 
-RetinaNet = RetinaNet_MobileNetv2
+RetinaFace = RetinaFace_ResNet50
 
 if __name__ == '__main__':
     input_var = tf.placeholder(tf.float32, [8, IMAGE_HEIGHT, IMAGE_WIDTH, IMAGE_CHANNEL])
     
-    retina_dic, retina_sizes = RetinaNet(input_var, False)
+    retina_dic, retina_sizes = RetinaFace(input_var, False)
     
     print(retina_dic['pred_bboxes'])
     print(retina_dic['pred_classes'])

@@ -12,7 +12,7 @@ from Define import *
 from Utils import *
 from DataAugmentation import *
 
-from RetinaNet_Utils import *
+from RetinaFace_Utils import *
 
 class Teacher(threading.Thread):
     ready = False
@@ -29,11 +29,11 @@ class Teacher(threading.Thread):
     name = ''
     retina_utils = None
     
-    def __init__(self, total_data_list, retina_sizes, min_data_size = 1, max_data_size = 2, name = 'Thread', debug = False):
+    def __init__(self, total_data_list, retina_sizes, min_data_size = 1, max_data_size = 10, name = 'Thread', debug = False):
         self.name = name
         self.debug = debug
         
-        self.retina_utils = RetinaNet_Utils()
+        self.retina_utils = RetinaFace_Utils()
         self.retina_utils.generate_anchors(retina_sizes)
 
         self.min_data_size = min_data_size
@@ -41,7 +41,7 @@ class Teacher(threading.Thread):
 
         self.total_data_list = total_data_list
         self.total_indexs = np.arange(len(self.total_data_list)).tolist()
-
+        
         threading.Thread.__init__(self)
         
     def get_batch_data(self):

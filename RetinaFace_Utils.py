@@ -7,7 +7,7 @@ import numpy as np
 from Define import *
 from Utils import *
 
-class RetinaNet_Utils:
+class RetinaFace_Utils:
     def __init__(self, anchor_scales = ANCHOR_SCALES, 
                        anchor_sizes = ANCHOR_SIZES,
                        image_wh = [IMAGE_WIDTH, IMAGE_HEIGHT]):
@@ -32,7 +32,7 @@ class RetinaNet_Utils:
 
             base_anchor_wh = np.asarray([self.anchor_sizes[i], self.anchor_sizes[i]])
             base_anchor_wh_list = [base_anchor_wh * scale for scale in self.anchor_scales]
-            print(i, base_anchor_wh_list)
+            # print(i, base_anchor_wh_list)
             
             for y in range(size[1]):
                 for x in range(size[0]):
@@ -131,9 +131,9 @@ if __name__ == '__main__':
     #     cv2.circle(bg, ((xmax + xmin) // 2, (ymax + ymin) // 2), 1, (0, 0, 255), 2)
     #     cv2.rectangle(bg, (xmin, ymin), (xmax, ymax), (0, 255, 0), 2)
 
-    #     if (index + 1) % ANCHORS == 0:
+    #     if (index + 1) % (len(ASPECT_RATIOS) * len(ANCHOR_SCALES)) == 0:
     #         cv2.imshow('show', bg)
-    #         cv2.waitKey(0)
+    #         cv2.waitKey(1)
 
     #         bg = np.zeros((IMAGE_HEIGHT, IMAGE_WIDTH, IMAGE_CHANNEL), dtype = np.uint8)
     
@@ -155,10 +155,6 @@ if __name__ == '__main__':
         
         gt_bboxes /= [w, h, w, h]
         gt_bboxes *= [IMAGE_WIDTH, IMAGE_HEIGHT, IMAGE_WIDTH, IMAGE_HEIGHT]
-
-        min_w = np.min(gt_bboxes[:, 2] - gt_bboxes[:, 0])
-        min_h = np.min(gt_bboxes[:, 3] - gt_bboxes[:, 1])
-        print(min_w, min_h)
         
         encode_bboxes, encode_classes = retina_utils.Encode(gt_bboxes, gt_classes)
         positive_count = np.sum(encode_classes[:, 1:])
@@ -178,7 +174,6 @@ if __name__ == '__main__':
         positive_mask = np.max(encode_classes[:, 1:], axis = 1)
         for i, mask in enumerate(positive_mask):
             if mask == 1:
-                print(retina_utils.anchors[i][2] - retina_utils.anchors[i][0])
                 xmin, ymin, xmax, ymax = (retina_utils.anchors[i] / [IMAGE_WIDTH, IMAGE_HEIGHT, IMAGE_WIDTH, IMAGE_HEIGHT] * [w, h, w, h]).astype(np.int32)
                 cv2.rectangle(image, (xmin, ymin), (xmax, ymax), (0, 0, 255), 1)
         

@@ -15,9 +15,9 @@ from Define import *
 from Utils import *
 from Teacher import *
 
-from RetinaNet import *
-from RetinaNet_Loss import *
-from RetinaNet_Utils import *
+from RetinaFace import *
+from RetinaFace_Loss import *
+from RetinaFace_Utils import *
 
 os.environ["CUDA_VISIBLE_DEVICES"] = GPU_INFO
 
@@ -31,7 +31,7 @@ log_print('[i] Train : {}'.format(len(train_data_list)))
 log_print('[i] Valid : {}'.format(len(valid_data_list)))
 
 # 2. build
-input_var = tf.placeholder(tf.float32, [None, IMAGE_HEIGHT, IMAGE_WIDTH, IMAGE_CHANNEL])
+input_var = tf.placeholder(tf.float32, [BATCH_SIZE, IMAGE_HEIGHT, IMAGE_WIDTH, IMAGE_CHANNEL])
 is_training = tf.placeholder(tf.bool)
 
 input_vars = tf.split(input_var, NUM_GPU)
@@ -44,10 +44,10 @@ for gpu_id in range(NUM_GPU):
     with tf.device(tf.DeviceSpec(device_type = "GPU", device_index = gpu_id)):
         with tf.variable_scope(tf.get_variable_scope(), reuse = reuse):
             print(input_vars[gpu_id], is_training, reuse)
-            retina_dic, retina_sizes = RetinaNet(input_vars[gpu_id], is_training)
+            retina_dic, retina_sizes = RetinaFace(input_vars[gpu_id], is_training)
 
             if not reuse:
-                retina_utils = RetinaNet_Utils()
+                retina_utils = RetinaFace_Utils()
             
             pred_bboxes_ops.append(retina_dic['pred_bboxes'])
             pred_classes_ops.append(retina_dic['pred_classes'])
@@ -59,15 +59,15 @@ retina_utils.generate_anchors(retina_sizes)
 pred_bboxes_op = Decode_Layer(pred_bboxes_op, retina_utils.anchors)
 
 _, retina_size, _ = pred_bboxes_op.shape.as_list()
-gt_bboxes_var = tf.placeholder(tf.float32, [None, retina_size, 4])
-gt_classes_var = tf.placeholder(tf.float32, [None, retina_size, CLASSES])
+gt_bboxes_var = tf.placeholder(tf.float32, [BATCH_SIZE, retina_size, 4])
+gt_classes_var = tf.placeholder(tf.float32, [BATCH_SIZE, retina_size, CLASSES])
 
 log_print('[i] pred_bboxes_op : {}'.format(pred_bboxes_op))
 log_print('[i] pred_classes_op : {}'.format(pred_classes_op))
 log_print('[i] gt_bboxes_var : {}'.format(gt_bboxes_var))
 log_print('[i] gt_classes_var : {}'.format(gt_classes_var))
 
-loss_op, focal_loss_op, giou_loss_op = RetinaNet_Loss(pred_bboxes_op, pred_classes_op, gt_bboxes_var, gt_classes_var)
+loss_op, focal_loss_op, giou_loss_op = RetinaFace_Loss(pred_bboxes_op, pred_classes_op, gt_bboxes_var, gt_classes_var)
 
 vars = tf.trainable_variables()
 l2_reg_loss_op = tf.add_n([tf.nn.l2_loss(var) for var in vars]) * WEIGHT_DECAY
@@ -109,7 +109,7 @@ pretrained_saver.restore(sess, './resnet_v1_model/resnet_v1_50.ckpt')
 # '''
 
 saver = tf.train.Saver(max_to_keep = 10)
-# saver.restore(sess, './model/RetinaNet_{}.ckpt'.format(30000))
+# saver.restore(sess, './model/RetinaFace_{}.ckpt'.format(30000))
 
 learning_rate = INIT_LEARNING_RATE
 
@@ -133,7 +133,7 @@ valid_encode_classes = []
 
 for i, data in enumerate(valid_data_list):
     image_name, gt_bboxes, gt_classes = data
-                
+    
     image_path = ROOT_DIR + 'validation/' + image_name
     gt_bboxes = np.asarray(gt_bboxes, dtype = np.float32)
     gt_classes = np.asarray([1 for c in gt_classes], dtype = np.int32)
@@ -182,7 +182,10 @@ for iter in range(1, MAX_ITERATION + 1):
                 find = True
                 batch_image_data, batch_encode_bboxes, batch_encode_classes = train_thread.get_batch_data()        
                 break
-                
+
+    # print(batch_image_data.shape)
+    # print(batch_encode_bboxes.shape)
+    
     _feed_dict = {input_var : batch_image_data, gt_bboxes_var : batch_encode_bboxes, gt_classes_var : batch_encode_classes, is_training : True, learning_rate_var : learning_rate}
     log = sess.run([train_op, loss_op, focal_loss_op, giou_loss_op, l2_reg_loss_op, train_summary_op], feed_dict = _feed_dict)
     # print(log[1:-1])
@@ -205,7 +208,7 @@ for iter in range(1, MAX_ITERATION + 1):
         train_time = int(time.time() - train_time)
         
         log_print('[i] iter : {}, loss : {:.4f}, focal_loss : {:.4f}, giou_loss : {:.4f}, l2_reg_loss : {:.4f}, train_time : {}sec'.format(iter, loss, focal_loss, giou_loss, l2_reg_loss, train_time))
-
+        
         loss_list = []
         focal_loss_list = []
         giou_loss_list = []
@@ -219,7 +222,7 @@ for iter in range(1, MAX_ITERATION + 1):
         for i, data in enumerate(sample_data_list):
             image_name, gt_bboxes, gt_classes = data
 
-            image_path = ROOT_DIR + image_name
+            image_path = ROOT_DIR + 'train/' + image_name
 
             image = cv2.imread(image_path)
             h, w, c = image.shape
@@ -262,7 +265,7 @@ for iter in range(1, MAX_ITERATION + 1):
         valid_iteration = valid_length // BATCH_SIZE
         
         valid_time = time.time()
-
+        
         for valid_iter in range(valid_iteration):
             batch_image_data = valid_image_data[valid_iter * BATCH_SIZE : (valid_iter + 1) * BATCH_SIZE]
             batch_encode_bboxes = valid_encode_bboxes[valid_iter * BATCH_SIZE : (valid_iter + 1) * BATCH_SIZE]
@@ -281,9 +284,9 @@ for iter in range(1, MAX_ITERATION + 1):
         valid_loss = np.mean(valid_loss_list)
         if best_valid_loss > valid_loss:
             best_valid_loss = valid_loss
-            saver.save(sess, './model/RetinaNet_{}.ckpt'.format(iter))
+            saver.save(sess, './model/RetinaFace_{}.ckpt'.format(iter))
 
         print()
         log_print('[i] iter : {}, valid_loss : {:.4f}, best_valid_loss : {:.4f}, valid_time : {}sec'.format(iter, valid_loss, best_valid_loss, valid_time))
 
-saver.save(sess, './model/RetinaNet.ckpt')
+saver.save(sess, './model/RetinaFace.ckpt')

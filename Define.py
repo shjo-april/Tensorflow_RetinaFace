@@ -2,7 +2,7 @@
 # author : SangHyeon Jo <josanghyeokn@gmail.com>
 
 # dataset parameters
-ROOT_DIR = 'D:/_DeepLearning_DB/Wider_Face_Dataset/'
+ROOT_DIR = 'D:/DB/Wider_Face_Dataset/'
 
 CLASS_NAMES = ['background'] + ['Face']
 CLASS_DIC = {class_name : index for index, class_name in enumerate(CLASS_NAMES)}
@@ -29,7 +29,7 @@ ANCHOR_SIZES = [2 ** (x + 2) for x in PYRAMID_LEVELS]
 ANCHORS = len(ANCHOR_SCALES)
 
 AP_THRESHOLD = 0.5
-NMS_THRESHOLD = 0.6
+NMS_THRESHOLD = 0.5
 
 POSITIVE_IOU_THRESHOLD = 0.5
 NEGATIVE_IOU_THRESHOLD = 0.3
@@ -39,13 +39,13 @@ WEIGHT_DECAY = 0.0005
 
 # train
 # use thread (Dataset)
-NUM_THREADS = 8
+NUM_THREADS = 10
 
-# single gpu training
+# multi gpu training
 GPU_INFO = "0,1,2,3"
 NUM_GPU = len(GPU_INFO.split(','))
 
-BATCH_SIZE = 4 * NUM_GPU
+BATCH_SIZE = 2 * NUM_GPU
 INIT_LEARNING_RATE = 1e-4
 
 # iteration & learning rate schedule

@@ -65,7 +65,7 @@ def GIoU(bboxes_1, bboxes_2):
         giou = ious - (C - union) / tf.maximum(C, 1e-10)
     return giou
 
-def RetinaNet_Loss(pred_bboxes, pred_classes, gt_bboxes, gt_classes, alpha = 0.25):
+def RetinaFace_Loss(pred_bboxes, pred_classes, gt_bboxes, gt_classes, alpha = 0.25):
     # calculate focal_loss & GIoU_loss
     focal_loss_op = Focal_Loss(pred_classes, gt_classes)
     
@@ -93,8 +93,8 @@ if __name__ == '__main__':
 
     gt_bboxes = tf.placeholder(tf.float32, [BATCH_SIZE, 22890, 4])
     gt_classes = tf.placeholder(tf.float32, [BATCH_SIZE, 22890, CLASSES])
-
-    loss_op, focal_loss_op, smooth_l1_loss_op = RetinaNet_Loss(pred_bboxes, pred_classes, gt_bboxes, gt_classes)
+    
+    loss_op, focal_loss_op, smooth_l1_loss_op = RetinaFace_Loss(pred_bboxes, pred_classes, gt_bboxes, gt_classes)
     print(loss_op, focal_loss_op, smooth_l1_loss_op)
 
     ## check ignored mask
